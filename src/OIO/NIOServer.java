@@ -60,13 +60,20 @@ public class NIOServer {
         SocketChannel channel = (SocketChannel) key.channel();
         //创建读取的缓存
         ByteBuffer buffer = ByteBuffer.allocate(1024);
-        channel.read(buffer);
-        byte[] data = buffer.array();
-        String msg = new String(data).trim();
-        System.out.println("server receive msg :" + msg);
+        int read = channel.read(buffer);
+        if (read>0){
+            byte[] data = buffer.array();
+            String msg = new String(data).trim();
+            System.out.println("server receive msg :" + msg);
+            ByteBuffer outBuffer = ByteBuffer.wrap(msg.getBytes());
+            channel.write(outBuffer);
+        }else{
+            System.out.println("client closed...");
+            key.cancel();
+        }
 
-        ByteBuffer outBuffer = ByteBuffer.wrap(msg.getBytes());
-        channel.write(outBuffer);
+
+
 
     }
 
@@ -83,7 +90,7 @@ public class NIOServer {
         channel.configureBlocking(false);
 
         System.out.println("A new client...");
-        channel.register(this.selector,SelectionKey.OP_ACCEPT);
+        channel.register(this.selector,SelectionKey.OP_READ);
     }
 
     public static  void main(String[] args) throws IOException {
